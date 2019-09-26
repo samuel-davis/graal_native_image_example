@@ -8,7 +8,6 @@ buildscript {
     }
     dependencies {
         //Protobuf
-        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.8'
         classpath "com.adarshr:gradle-test-logger-plugin:1.6.0"
     }
 }
@@ -74,6 +73,7 @@ task graalNativeCompile(type: Exec){
                     '&& native-image ' +
                     "-cp $project.projectDir " +
                     '--verbose ' +
+                    '--no-server ' +
                     "-H:TempDirectory='$project.buildDir/native_build' -H:+TraceClassInitialization " +
                     "-Djava.library.path=$project.buildDir " +
                     "-H:CLibraryPath=$project.buildDir " +
@@ -90,16 +90,7 @@ task nativeImageBuild(type: Exec) {
                     "&& gcc -Wno-error " +
                     "-fPIC  cars.cc " +
                     "-shared -o  $project.buildDir/libcars.so  && cp *.h $project.buildDir"
-
-//                    "-Wl,--whole-archive  $projectDir/ffmpeg-static/ffmpegoutput/ffmpeg_statics/libavcodec.a " +
-//                            "$projectDir/ffmpeg-static/ffmpegoutput/ffmpeg_statics/libavdevice.a "+
-//                            "$projectDir/ffmpeg-static/ffmpegoutput/ffmpeg_statics/libavfilter.a "+
-//                            "$projectDir/ffmpeg-static/ffmpegoutput/ffmpeg_statics/libavformat.a "+
-//                            "$projectDir/ffmpeg-static/ffmpegoutput/ffmpeg_statics/libavutil.a "+
-//                            "$projectDir/ffmpeg-static/ffmpegoutput/ffmpeg_statics/libpostproc.a "+
-//                            "$projectDir/ffmpeg-static/ffmpegoutput/ffmpeg_statics/libswresample.a "+
-//                            "$projectDir/ffmpeg-static/ffmpegoutput/ffmpeg_statics/libswscale.a "+
-//                            " -Wl,-no-whole-archive "
+    
 
 }
 nativeImageBuild.finalizedBy(graalNativeCompile)
