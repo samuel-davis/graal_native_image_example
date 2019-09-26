@@ -11,3 +11,10 @@ I needed a place to test out all the GraalVM features I required on a separate p
 - Usage of C Structs - > Java Objects
 - Usage of C Enums -> Java Enums
 - Usage of C char** and char* to -> Java String and Java String[]
+
+
+## Things to Do
+- Initialize Web Server in Native Image
+- Detect if running within Native or from JAR and appropriately load .so files
+- Setup package search paths on the compiled binary for easier distribution of the executable. 
+- Dynamically add memory from Java to C and vice versa, or at least figure out the correct strategy to do so and when using the GraalVM annotations / functions. 
