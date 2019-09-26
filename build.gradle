@@ -1,0 +1,155 @@
+buildscript {
+    repositories {
+        jcenter()
+        maven {
+            url "https://dlvp.gradle.plugins.gradle.org/m2/"
+        }
+        mavenLocal()
+    }
+    dependencies {
+        //Protobuf
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.8'
+        classpath "com.adarshr:gradle-test-logger-plugin:1.6.0"
+    }
+}
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '5.1.0'
+    //id 'com.palantir.graal' version "0.4.0"
+
+}
+apply plugin: 'com.adarshr.test-logger'
+ext{
+    def nativeExecutable =''
+}
+repositories {
+    jcenter()
+    mavenLocal()
+    mavenCentral()
+    google()
+    maven {
+        url "https://dl.bintray.com/codehounded/open"
+    }
+}
+
+test {
+    testlogger {
+        showStandardStreams false
+        slowThreshold 30000
+        theme 'mocha'
+    }
+}
+
+def mainClassName = 'davis.graal.Main'
+
+group 'davis'
+version '1.0'
+
+sourceCompatibility = 1.8
+
+
+
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
+shadowJar {
+    mergeServiceFiles()
+    exclude 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.SF'
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
+
+jar.finalizedBy(shadowJar)
+
+
+task graalNativeCompile(type: Exec){
+    executable "bash"
+    args "-c",
+            "cd $project.buildDir "+
+                    '&& export PATH=$HOME/tools/graalvm/bin:$PATH ' +
+                    "export NATIVE_INCLUDE_DIR=$project.buildDir" +
+                    '&& native-image ' +
+                    "-cp $project.projectDir " +
+                    '--verbose ' +
+                    "-H:TempDirectory='$project.buildDir/native_build' -H:+TraceClassInitialization " +
+                    "-Djava.library.path=$project.buildDir " +
+                    "-H:CLibraryPath=$project.buildDir " +
+                    "-jar $shadowJar.outputs.files.singleFile"
+
+    //-H:LinkerRPath=... -H:NativeLinkerOption=...
+}
+
+
+task nativeImageBuild(type: Exec) {
+    executable "bash"
+    args "-c",
+            "export LD_LIBRARY_PATH=$project.buildDir/slibs:"+'$LD_LIBRARY_PATH'+ " && cd $projectDir/cc_src "+
+                    "&& gcc -Wno-error " +
+                    "-fPIC  cars.cc " +
+                    "-shared -o  $project.buildDir/libcars.so  && cp *.h $project.buildDir"
+
+//                    "-Wl,--whole-archive  $projectDir/ffmpeg-static/ffmpegoutput/ffmpeg_statics/libavcodec.a " +
+//                            "$projectDir/ffmpeg-static/ffmpegoutput/ffmpeg_statics/libavdevice.a "+
+//                            "$projectDir/ffmpeg-static/ffmpegoutput/ffmpeg_statics/libavfilter.a "+
+//                            "$projectDir/ffmpeg-static/ffmpegoutput/ffmpeg_statics/libavformat.a "+
+//                            "$projectDir/ffmpeg-static/ffmpegoutput/ffmpeg_statics/libavutil.a "+
+//                            "$projectDir/ffmpeg-static/ffmpegoutput/ffmpeg_statics/libpostproc.a "+
+//                            "$projectDir/ffmpeg-static/ffmpegoutput/ffmpeg_statics/libswresample.a "+
+//                            "$projectDir/ffmpeg-static/ffmpegoutput/ffmpeg_statics/libswscale.a "+
+//                            " -Wl,-no-whole-archive "
+
+}
+nativeImageBuild.finalizedBy(graalNativeCompile)
+
+
+task testNative(type: Exec) {
+    def name = shadowJar.outputs.files.singleFile.getName().replaceAll(".jar","")
+    executable "bash"
+    args "-c",
+            "cd $project.buildDir && "+
+                    "./$name"
+}
+
+
+
+
+shadowJar.finalizedBy(nativeImageBuild)
+
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // https://mvnrepository.com/artifact/org.graalvm.sdk/graal-sdk
+    compile group: 'org.graalvm.sdk', name: 'graal-sdk', version: '19.2.0'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile 'org.yaml:snakeyaml:1.25'
+    //Json and Yaml
+    //Apache Commons
+    compile 'org.apache.commons:commons-lang3:3.6'
+    compile 'commons-io:commons-io:2.6'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.9'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.9'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.9.9'
+    compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.9.9'
+    //OkHttp for web requests
+    compile 'com.squareup.okhttp:okhttp:2.7.5'
+    //Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.6'
+    annotationProcessor("org.projectlombok:lombok:1.18.6")
+    testCompileOnly 'org.projectlombok:lombok:1.18.6'
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.6")
+    // Logging dependency for all modules
+    compile 'org.slf4j:slf4j-api:1.7.13'
+    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.13'
+    //Test Dependencies For All Modules
+    testCompile 'junit:junit:4.12'
+    testCompile group: 'org.awaitility', name: 'awaitility', version: '3.0.0'
+    //Test Dependencies
+    testCompile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.4.11'
+    testCompile 'org.apache.httpcomponents:httpclient:4.3.4'
+}

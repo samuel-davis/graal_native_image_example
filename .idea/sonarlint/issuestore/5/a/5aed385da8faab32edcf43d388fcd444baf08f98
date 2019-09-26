@@ -1,0 +1,6 @@
+
+nsquid:CommentedOutCodeLine"<This block of commented-out lines of code should be removed.(Ï´¬øþÿÿÿÿ8øí•§Ô-
+isquid:CommentedOutCodeLineH"<This block of commented-out lines of code should be removed.(ÁÿÑ8êüÃªÔ-
+¤%squid:RedundantThrowsDeclarationCheck8"lRemove the declaration of thrown exception 'java.io.IOException', as it cannot be thrown from method's body.(œû¿Ø8òÞ´§Ô-
+nsquid:UnusedPrivateMethod("=Remove this unused private "testAllocationAndRemoval" method.(áØÕ úÿÿÿÿ8íƒÜ‚Õ-
+isquid:CommentedOutCodeLine:"<This block of commented-out lines of code should be removed.(žè¼î8íƒÜ‚Õ-
